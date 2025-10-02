@@ -10,10 +10,14 @@ import {
   Platform,
   SafeAreaView,
   ScrollView,
+  Dimensions,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../contexts/AuthContext';
 import { testRegistration, testHealth } from '../utils/apiTest';
+import { Colors, Typography, Spacing, BorderRadius, Shadows, Components } from '../theme/designSystem';
+
+const { width, height } = Dimensions.get('window');
 
 const RegisterScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
@@ -84,108 +88,174 @@ const RegisterScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
+        style={styles.keyboardContainer}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.content}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join the community</Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header Section */}
+          <View style={styles.headerSection}>
+            <View style={styles.brandContainer}>
+              <View style={styles.logoCircle}>
+                <Text style={styles.logoIcon}>💕</Text>
+              </View>
+              <Text style={styles.brandName}>Join ConnectLive</Text>
+              <Text style={styles.brandTagline}>Create your profile and start connecting</Text>
+            </View>
+          </View>
 
-            <View style={styles.form}>
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="#666"
-                value={formData.email}
-                onChangeText={(value) => handleInputChange('email', value)}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Display Name"
-                placeholderTextColor="#666"
-                value={formData.displayName}
-                onChangeText={(value) => handleInputChange('displayName', value)}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Age"
-                placeholderTextColor="#666"
-                value={formData.age}
-                onChangeText={(value) => handleInputChange('age', value)}
-                keyboardType="numeric"
-              />
-
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={formData.gender}
-                  onValueChange={(value) => handleInputChange('gender', value)}
-                  style={styles.picker}
-                  dropdownIconColor="#fff"
-                >
-                  <Picker.Item label="Gender" value="" color="#666" />
-                  <Picker.Item label="Male" value="male" color="#fff" />
-                  <Picker.Item label="Female" value="female" color="#fff" />
-                  <Picker.Item label="Other" value="other" color="#fff" />
-                </Picker>
+          {/* Registration Form */}
+          <View style={styles.formContainer}>
+            <View style={styles.formCard}>
+              <View style={styles.formHeader}>
+                <Text style={styles.formTitle}>Create Your Account</Text>
+                <Text style={styles.formSubtitle}>Fill in your details to get started</Text>
               </View>
 
-              <TextInput
-                style={[styles.input, styles.bioInput]}
-                placeholder="Bio (optional, 140 characters max)"
-                placeholderTextColor="#666"
-                value={formData.bio}
-                onChangeText={(value) => handleInputChange('bio', value)}
-                multiline
-                maxLength={140}
-              />
+              {/* Personal Information Section */}
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Personal Information</Text>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor="#666"
-                value={formData.password}
-                onChangeText={(value) => handleInputChange('password', value)}
-                secureTextEntry
-              />
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Email Address</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your email"
+                    placeholderTextColor={Colors.neutral[400]}
+                    value={formData.email}
+                    onChangeText={(value) => handleInputChange('email', value)}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                  />
+                </View>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Confirm Password"
-                placeholderTextColor="#666"
-                value={formData.confirmPassword}
-                onChangeText={(value) => handleInputChange('confirmPassword', value)}
-                secureTextEntry
-              />
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Display Name</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="What should people call you?"
+                    placeholderTextColor={Colors.neutral[400]}
+                    value={formData.displayName}
+                    onChangeText={(value) => handleInputChange('displayName', value)}
+                    autoComplete="name"
+                  />
+                </View>
 
-              <TouchableOpacity
-                style={[styles.button, loading && styles.buttonDisabled]}
-                onPress={handleRegister}
-                disabled={loading}
-              >
-                <Text style={styles.buttonText}>
-                  {loading ? 'Creating Account...' : 'Create Account'}
-                </Text>
-              </TouchableOpacity>
+                <View style={styles.rowInputs}>
+                  <View style={[styles.inputGroup, { flex: 1 }]}>
+                    <Text style={styles.inputLabel}>Age</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Age"
+                      placeholderTextColor={Colors.neutral[400]}
+                      value={formData.age}
+                      onChangeText={(value) => handleInputChange('age', value)}
+                      keyboardType="numeric"
+                      maxLength={2}
+                    />
+                  </View>
 
-              <TouchableOpacity
-                style={[styles.testButton, loading && styles.buttonDisabled]}
-                onPress={handleTestApi}
-                disabled={loading}
-              >
-                <Text style={styles.testButtonText}>
-                  Test Backend Connection
-                </Text>
-              </TouchableOpacity>
+                  <View style={[styles.inputGroup, { flex: 1, marginLeft: Spacing.base }]}>
+                    <Text style={styles.inputLabel}>Gender</Text>
+                    <View style={styles.pickerContainer}>
+                      <Picker
+                        selectedValue={formData.gender}
+                        onValueChange={(value) => handleInputChange('gender', value)}
+                        style={styles.picker}
+                        dropdownIconColor={Colors.neutral[300]}
+                      >
+                        <Picker.Item label="Select" value="" color={Colors.neutral[400]} />
+                        <Picker.Item label="Male" value="male" color={Colors.neutral[50]} />
+                        <Picker.Item label="Female" value="female" color={Colors.neutral[50]} />
+                        <Picker.Item label="Other" value="other" color={Colors.neutral[50]} />
+                      </Picker>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Bio (Optional)</Text>
+                  <TextInput
+                    style={[styles.input, styles.bioInput]}
+                    placeholder="Tell people a bit about yourself..."
+                    placeholderTextColor={Colors.neutral[400]}
+                    value={formData.bio}
+                    onChangeText={(value) => handleInputChange('bio', value)}
+                    multiline
+                    maxLength={140}
+                    textAlignVertical="top"
+                  />
+                  <Text style={styles.characterCount}>{formData.bio.length}/140</Text>
+                </View>
+              </View>
+
+              {/* Security Section */}
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Security</Text>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Password</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Create a strong password"
+                    placeholderTextColor={Colors.neutral[400]}
+                    value={formData.password}
+                    onChangeText={(value) => handleInputChange('password', value)}
+                    secureTextEntry
+                    autoComplete="new-password"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Confirm Password</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Re-enter your password"
+                    placeholderTextColor={Colors.neutral[400]}
+                    value={formData.confirmPassword}
+                    onChangeText={(value) => handleInputChange('confirmPassword', value)}
+                    secureTextEntry
+                    autoComplete="new-password"
+                  />
+                </View>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={[styles.primaryButton, loading && styles.buttonDisabled]}
+                  onPress={handleRegister}
+                  disabled={loading}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.primaryButtonText}>
+                    {loading ? 'Creating Account...' : 'Create Account'}
+                  </Text>
+                  {loading && <Text style={styles.loadingIcon}>⏳</Text>}
+                </TouchableOpacity>
+
+                {/* Development only - Test button */}
+                {__DEV__ && (
+                  <TouchableOpacity
+                    style={[styles.testButton, loading && styles.buttonDisabled]}
+                    onPress={handleTestApi}
+                    disabled={loading}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.testButtonText}>Test Backend</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
 
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
+            {/* Sign In Link */}
+            <View style={styles.signInSection}>
+              <Text style={styles.signInText}>Already have an account? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                <Text style={styles.linkText}>Sign In</Text>
+                <Text style={styles.signInLink}>Sign In</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -198,104 +268,184 @@ const RegisterScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: Colors.neutral[900],
+  },
+  keyboardContainer: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: Spacing['2xl'],
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 20,
+
+  // Header Section
+  headerSection: {
+    paddingTop: Spacing['5xl'], // Increased for iPhone safe area
+    paddingBottom: Spacing.xl,
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 8,
+  brandContainer: {
+    alignItems: 'center',
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  form: {
-    marginBottom: 24,
-  },
-  input: {
-    height: 56,
-    backgroundColor: '#2a2a2a',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: '#fff',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  bioInput: {
+  logoCircle: {
+    width: 80,
     height: 80,
-    textAlignVertical: 'top',
-    paddingTop: 16,
-  },
-  pickerContainer: {
-    backgroundColor: '#2a2a2a',
-    borderRadius: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  picker: {
-    color: '#fff',
-    height: 56,
-  },
-  button: {
-    height: 56,
-    backgroundColor: '#ff4458',
-    borderRadius: 12,
+    borderRadius: 40,
+    backgroundColor: Colors.primary.main,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
+    marginBottom: Spacing.lg,
+    ...Shadows.lg,
+  },
+  logoIcon: {
+    fontSize: Typography.fontSize['3xl'],
+  },
+  brandName: {
+    fontSize: Typography.fontSize['3xl'],
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.neutral[50],
+    marginBottom: Spacing.sm,
+    letterSpacing: 0.5,
+  },
+  brandTagline: {
+    fontSize: Typography.fontSize.base,
+    color: Colors.neutral[300],
+    textAlign: 'center',
+    fontWeight: Typography.fontWeight.medium,
+  },
+
+  // Form Section
+  formContainer: {
+    paddingHorizontal: Spacing.lg,
+  },
+  formCard: {
+    backgroundColor: Colors.neutral[800],
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    marginBottom: Spacing.lg,
+    ...Shadows.lg,
+  },
+  formHeader: {
+    marginBottom: Spacing.xl,
+    alignItems: 'center',
+  },
+  formTitle: {
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.neutral[50],
+    marginBottom: Spacing.sm,
+  },
+  formSubtitle: {
+    fontSize: Typography.fontSize.base,
+    color: Colors.neutral[300],
+    textAlign: 'center',
+  },
+
+  // Section Styles
+  sectionContainer: {
+    marginBottom: Spacing.xl,
+  },
+  sectionTitle: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.primary.main,
+    marginBottom: Spacing.lg,
+  },
+
+  // Input Styles
+  inputGroup: {
+    marginBottom: Spacing.lg,
+  },
+  inputLabel: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
+    color: Colors.neutral[200],
+    marginBottom: Spacing.sm,
+  },
+  input: {
+    ...Components.input,
+    height: 52,
+    fontSize: Typography.fontSize.base,
+  },
+  bioInput: {
+    height: 100,
+    paddingTop: Spacing.base,
+  },
+  characterCount: {
+    fontSize: Typography.fontSize.xs,
+    color: Colors.neutral[400],
+    textAlign: 'right',
+    marginTop: Spacing.xs,
+  },
+  rowInputs: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  pickerContainer: {
+    backgroundColor: Colors.neutral[700],
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.neutral[600],
+  },
+  picker: {
+    color: Colors.neutral[50],
+    height: 52,
+  },
+
+  // Button Styles
+  buttonContainer: {
+    gap: Spacing.base,
+  },
+  primaryButton: {
+    backgroundColor: Colors.primary.main,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.base,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    ...Shadows.md,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+  primaryButtonText: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.neutral[50],
+  },
+  loadingIcon: {
+    fontSize: Typography.fontSize.base,
   },
   testButton: {
-    height: 56,
-    backgroundColor: '#2a2a2a',
-    borderRadius: 12,
-    justifyContent: 'center',
+    backgroundColor: Colors.neutral[700],
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.md,
     alignItems: 'center',
-    marginTop: 12,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: Colors.neutral[600],
   },
   testButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#888',
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
+    color: Colors.neutral[300],
   },
-  footer: {
+
+  // Sign In Section
+  signInSection: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: Spacing.lg,
   },
-  footerText: {
-    fontSize: 16,
-    color: '#666',
+  signInText: {
+    fontSize: Typography.fontSize.base,
+    color: Colors.neutral[300],
   },
-  linkText: {
-    fontSize: 16,
-    color: '#ff4458',
-    fontWeight: '600',
+  signInLink: {
+    fontSize: Typography.fontSize.base,
+    color: Colors.primary.main,
+    fontWeight: Typography.fontWeight.semibold,
   },
 });
 

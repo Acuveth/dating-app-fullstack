@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { SocketProvider } from './src/contexts/SocketContext';
+import { Ionicons } from '@expo/vector-icons';
 
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -23,9 +24,19 @@ function MainTabs() {
         tabBarStyle: {
           backgroundColor: '#1a1a1a',
           borderTopColor: '#333',
+          height: 90,
+          paddingBottom: 10,
+          paddingTop: 5,
         },
         tabBarActiveTintColor: '#ff4458',
         tabBarInactiveTintColor: '#888',
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+        },
+        tabBarIconStyle: {
+          marginBottom: 2,
+        },
       }}
     >
       <Tab.Screen
@@ -33,6 +44,13 @@ function MainTabs() {
         component={VideoMatchScreen}
         options={{
           tabBarLabel: 'Match',
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons
+              name={focused ? 'videocam' : 'videocam-outline'}
+              size={28}
+              color={color}
+            />
+          ),
         }}
       />
       <Tab.Screen
@@ -40,6 +58,13 @@ function MainTabs() {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons
+              name={focused ? 'person' : 'person-outline'}
+              size={28}
+              color={color}
+            />
+          ),
         }}
       />
     </Tab.Navigator>

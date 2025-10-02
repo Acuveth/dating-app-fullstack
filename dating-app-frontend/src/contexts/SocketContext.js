@@ -72,10 +72,27 @@ export const SocketProvider = ({ children }) => {
     });
 
     socketRef.current.on('helper:received', (helper) => {
+      console.log('📨 helper:received event from server:', helper);
+      console.log('📊 Helper data type:', typeof helper);
+      console.log('📋 Helper has content:', !!helper?.content);
+      console.log('🏷️ Helper type:', helper?.type);
+
+      if (!helper) {
+        console.log('⚠️ WARNING: Server returned null/undefined helper - might be out of content!');
+      }
+
       setCurrentMatch(prev => ({
         ...prev,
         currentHelper: helper
       }));
+
+      console.log('✅ currentMatch.currentHelper updated');
+    });
+
+    // Handle helper request errors (like running out of content)
+    socketRef.current.on('helper:error', (error) => {
+      console.log('❌ helper:error event from server:', error);
+      console.log('🚨 This might indicate no more content available!');
     });
 
     // Video call events for demo purposes
@@ -97,9 +114,13 @@ export const SocketProvider = ({ children }) => {
   };
 
   const joinMatch = (matchId) => {
+    console.log('joinMatch called with:', { matchId, userId: user?._id, socketConnected: !!socketRef.current });
     if (socketRef.current && user) {
+      console.log('Emitting match:join event');
       socketRef.current.emit('match:join', { matchId, userId: user._id });
       setCurrentMatch({ matchId, status: 'pending' });
+    } else {
+      console.log('Cannot join match - missing socket or user:', { socket: !!socketRef.current, user: !!user });
     }
   };
 
@@ -122,17 +143,25 @@ export const SocketProvider = ({ children }) => {
   };
 
   const skipMatch = (matchId) => {
+    console.log('skipMatch called with:', { matchId, userId: user?._id, socketConnected: !!socketRef.current });
     if (socketRef.current && user) {
+      console.log('Emitting match:skip event');
       socketRef.current.emit('match:skip', {
         matchId,
         userId: user._id
       });
+    } else {
+      console.log('Cannot skip - missing socket or user:', { socket: !!socketRef.current, user: !!user });
     }
   };
 
   const requestHelper = (type, matchId) => {
+    console.log('🚀 SocketContext.requestHelper called with:', { type, matchId });
     if (socketRef.current) {
+      console.log('📡 Emitting helper:request to server');
       socketRef.current.emit('helper:request', { type, matchId });
+    } else {
+      console.log('❌ No socket connection available');
     }
   };
 

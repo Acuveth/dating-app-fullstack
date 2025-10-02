@@ -7,11 +7,24 @@ const { getDistance } = require('../utils/location');
 const router = express.Router();
 
 router.post('/find', auth, async (req, res) => {
+  console.log('🎯 MATCH REQUEST RECEIVED');
   try {
     const user = req.user;
     const { preferences, location, blockedUsers, _id } = user;
 
+    console.log('=== MATCH FINDING DEBUG ===');
+    console.log('User:', {
+      id: _id,
+      displayName: user.displayName,
+      age: user.age,
+      gender: user.gender,
+      preferences: preferences,
+      location: location?.city,
+      hasCoordinates: !!location?.coordinates
+    });
+
     if (!location?.coordinates) {
+      console.log('ERROR: No coordinates set for user');
       return res.status(400).json({ error: 'Location not set' });
     }
 
@@ -19,12 +32,15 @@ router.post('/find', auth, async (req, res) => {
       .filter(m => new Date() - m.matchedAt < 24 * 60 * 60 * 1000)
       .map(m => m.userId);
 
+    console.log('Recent matches (last 24h):', recentMatchUserIds.length);
+
+    // Make isOnline optional for testing
     let query = {
       _id: {
         $ne: _id,
         $nin: [...blockedUsers, ...recentMatchUserIds]
       },
-      isOnline: true,
+      // isOnline: true, // Temporarily disable online requirement
       age: { $gte: preferences.ageMin, $lte: preferences.ageMax }
     };
 
@@ -32,12 +48,31 @@ router.post('/find', auth, async (req, res) => {
       query.gender = preferences.gender;
     }
 
+    console.log('Query criteria:', query);
+
     const potentialMatches = await User.find(query)
-      .select('displayName age bio location photos gender preferences')
+      .select('displayName age bio location photos gender preferences isOnline')
       .limit(50);
 
+    console.log('Potential matches found:', potentialMatches.length);
+    potentialMatches.forEach(match => {
+      console.log('  -', {
+        id: match._id,
+        name: match.displayName,
+        age: match.age,
+        gender: match.gender,
+        isOnline: match.isOnline,
+        hasLocation: !!match.location?.coordinates
+      });
+    });
+
     const filteredMatches = potentialMatches.filter(match => {
-      if (!match.location?.coordinates) return false;
+      console.log(`Checking match: ${match.displayName}`);
+
+      if (!match.location?.coordinates) {
+        console.log(`  - REJECTED: No coordinates`);
+        return false;
+      }
 
       const distance = getDistance(
         location.coordinates.lat,
@@ -46,20 +81,36 @@ router.post('/find', auth, async (req, res) => {
         match.location.coordinates.lng
       );
 
-      if (distance > preferences.maxDistance) return false;
-
-      if (match.preferences) {
-        if (user.age < match.preferences.ageMin ||
-            user.age > match.preferences.ageMax) return false;
-
-        if (match.preferences.gender !== 'both' &&
-            match.preferences.gender !== user.gender) return false;
+      console.log(`  - Distance: ${distance}km (max: ${preferences.maxDistance}km)`);
+      if (distance > preferences.maxDistance) {
+        console.log(`  - REJECTED: Too far`);
+        return false;
       }
 
+      if (match.preferences) {
+        console.log(`  - Match age preferences: ${match.preferences.ageMin}-${match.preferences.ageMax}, user age: ${user.age}`);
+        if (user.age < match.preferences.ageMin ||
+            user.age > match.preferences.ageMax) {
+          console.log(`  - REJECTED: Age mismatch`);
+          return false;
+        }
+
+        console.log(`  - Match gender pref: ${match.preferences.gender}, user gender: ${user.gender}`);
+        if (match.preferences.gender !== 'both' &&
+            match.preferences.gender !== user.gender) {
+          console.log(`  - REJECTED: Gender mismatch`);
+          return false;
+        }
+      }
+
+      console.log(`  - ACCEPTED: ${match.displayName}`);
       return true;
     });
 
+    console.log('Filtered matches:', filteredMatches.length);
+
     if (filteredMatches.length === 0) {
+      console.log('RESULT: No matches available');
       return res.json({ match: null, message: 'No matches available' });
     }
 

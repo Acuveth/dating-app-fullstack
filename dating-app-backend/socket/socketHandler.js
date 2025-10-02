@@ -44,12 +44,14 @@ const socketHandler = (io) => {
         const room = matchRooms.get(roomId);
         room.users.add(userId);
 
-        if (room.users.size === 2 && match.status === 'pending') {
+        // Start match when first user joins (for testing) or when both users join
+        if ((room.users.size >= 1) && match.status === 'pending') {
           match.status = 'active';
           await match.save();
 
           io.to(roomId).emit('match:started', { matchId });
 
+          // Start timer immediately when match becomes active
           room.timerInterval = setInterval(() => {
             const elapsed = Math.floor((Date.now() - room.startTime) / 1000);
             const remaining = 180 - elapsed;
@@ -140,18 +142,26 @@ const socketHandler = (io) => {
 
         const roomId = `match_${matchId}`;
 
+        // Check if both users have made decisions or if testing with single user
+        const bothDecided = match.user1Decision !== 'pending' && match.user2Decision !== 'pending';
+        const singleUserDecided = match.user1Decision !== 'pending' || match.user2Decision !== 'pending';
+
         if (match.user1Decision === 'yes' && match.user2Decision === 'yes') {
+          // Both chose to continue - extend the match
           match.status = 'extended';
           match.extended = true;
           await match.save();
 
           io.to(roomId).emit('match:extended', { matchId });
 
+          // Stop the timer when match is extended
           const room = matchRooms.get(roomId);
           if (room && room.timerInterval) {
             clearInterval(room.timerInterval);
+            room.timerInterval = null;
           }
-        } else if (match.user1Decision !== 'pending' && match.user2Decision !== 'pending') {
+        } else if (bothDecided || (singleUserDecided && process.env.NODE_ENV !== 'production')) {
+          // Handle when both decided or single user for testing
           if (match.user1Decision === 'no' || match.user2Decision === 'no') {
             match.status = 'ended';
             match.endedAt = new Date();
@@ -165,6 +175,20 @@ const socketHandler = (io) => {
             });
 
             cleanupMatchRoom(roomId);
+          } else if (match.user1Decision === 'yes' && match.user2Decision === 'pending') {
+            // Single user said yes, treat as continue for testing
+            match.status = 'extended';
+            match.extended = true;
+            match.user2Decision = 'yes'; // Auto-accept for testing
+            await match.save();
+
+            io.to(roomId).emit('match:extended', { matchId });
+
+            const room = matchRooms.get(roomId);
+            if (room && room.timerInterval) {
+              clearInterval(room.timerInterval);
+              room.timerInterval = null;
+            }
           }
         }
       } catch (error) {
@@ -173,10 +197,15 @@ const socketHandler = (io) => {
     });
 
     socket.on('match:skip', async ({ matchId, userId }) => {
+      console.log('🚫 MATCH SKIP RECEIVED:', { matchId, userId, socketId: socket.id });
       try {
         const match = await Match.findById(matchId);
-        if (!match) return;
+        if (!match) {
+          console.log('❌ Match not found:', matchId);
+          return;
+        }
 
+        console.log('⚰️ Ending match:', matchId);
         match.status = 'ended';
         match.endedAt = new Date();
 
@@ -188,11 +217,19 @@ const socketHandler = (io) => {
         }
 
         await match.save();
+        console.log('💾 Match saved with status:', match.status);
 
+        // Send skip notification to the user who skipped (direct socket response)
+        socket.emit('match:skipped', { matchId, skippedBy: userId });
+        console.log('📡 Emitted match:skipped directly to socket:', socket.id);
+
+        // Also try sending to room in case other user is connected
         const roomId = `match_${matchId}`;
         io.to(roomId).emit('match:skipped', { matchId, skippedBy: userId });
+        console.log('📡 Also emitted match:skipped to room:', roomId);
 
         cleanupMatchRoom(roomId);
+        console.log('🧹 Match room cleaned up');
       } catch (error) {
         console.error('Error skipping match:', error);
       }

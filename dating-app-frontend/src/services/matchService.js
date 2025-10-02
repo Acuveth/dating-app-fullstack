@@ -17,10 +17,17 @@ const createApiInstance = async () => {
 export const matchService = {
   findMatch: async () => {
     try {
+      console.log('🚀 Starting match request...');
       const api = await createApiInstance();
+      console.log('📡 API instance created, sending POST to /match/find');
+
       const response = await api.post('/match/find');
+      console.log('✅ Match response received:', response.data);
       return response.data;
     } catch (error) {
+      console.error('❌ Match request failed:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       throw new Error(error.response?.data?.error || 'Failed to find match');
     }
   },
