@@ -9,15 +9,22 @@ import {
   StatusBar,
   Dimensions,
 } from "react-native";
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import { useAuth } from "../contexts/AuthContext";
 import { useSocket } from "../contexts/SocketContext";
 import { matchService } from "../services/matchService";
 import VideoCall from "../components/VideoCall";
 import ConversationHelpers from "../components/ConversationHelpers";
 import FullProfileModal from "../components/FullProfileModal";
-import { Colors, Typography, Spacing, BorderRadius, Shadows, Components } from '../theme/designSystem';
+import {
+  Colors,
+  Typography,
+  Spacing,
+  BorderRadius,
+  Shadows,
+  Components,
+} from "../theme/designSystem";
 
 const { width, height } = Dimensions.get("window");
 
@@ -44,15 +51,15 @@ const VideoMatchScreen = () => {
 
   // Debug logging for modal states
   useEffect(() => {
-    console.log('🔒 showHelpers changed to:', showHelpers);
+    console.log("🔒 showHelpers changed to:", showHelpers);
   }, [showHelpers]);
 
   useEffect(() => {
-    console.log('👤 showFullProfile changed to:', showFullProfile);
+    console.log("👤 showFullProfile changed to:", showFullProfile);
   }, [showFullProfile]);
 
   useEffect(() => {
-    console.log('🎯 localCurrentHelper changed:', localCurrentHelper);
+    console.log("🎯 localCurrentHelper changed:", localCurrentHelper);
   }, [localCurrentHelper]);
 
   useEffect(() => {
@@ -120,14 +127,50 @@ const VideoMatchScreen = () => {
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     console.log("Skip button pressed, currentMatch:", currentMatch);
     if (currentMatch?.matchId) {
       console.log("Calling skipMatch with matchId:", currentMatch.matchId);
       skipMatch(currentMatch.matchId);
+
+      // Immediately find a new match
+      try {
+        setLoading(true);
+        setMatchState("finding");
+
+        const response = await matchService.findMatch();
+
+        if (response.match) {
+          setCurrentPartner(response.match);
+          console.log("🔗 Joining new match with ID:", response.match.matchId);
+          joinMatch(response.match.matchId);
+        } else {
+          Alert.alert(
+            "No Matches",
+            response.message ||
+              "No matches available right now. Try again later."
+          );
+          setMatchState("idle");
+        }
+      } catch (error) {
+        Alert.alert("Error", error.message);
+        setMatchState("idle");
+      } finally {
+        setLoading(false);
+      }
     } else {
       console.log("No matchId available, cannot skip");
     }
+  };
+
+  const handleEndCall = () => {
+    if (currentMatch?.matchId) {
+      leaveMatch(currentMatch.matchId);
+    }
+    setMatchState("idle");
+    setCurrentPartner(null);
+    setShowDecisionButtons(false);
+    setUserDecision(null);
   };
 
   const handleDecision = (decision) => {
@@ -167,38 +210,43 @@ const VideoMatchScreen = () => {
   };
 
   const handleAnotherTopic = (type) => {
-    console.log('🔄 VideoMatchScreen.handleAnotherTopic called with type:', type);
-    console.log('📞 currentMatch.matchId:', currentMatch?.matchId);
-    console.log('🔒 showHelpers before:', showHelpers);
-    console.log('👤 showFullProfile before:', showFullProfile);
+    console.log(
+      "🔄 VideoMatchScreen.handleAnotherTopic called with type:",
+      type
+    );
+    console.log("📞 currentMatch.matchId:", currentMatch?.matchId);
+    console.log("🔒 showHelpers before:", showHelpers);
+    console.log("👤 showFullProfile before:", showFullProfile);
 
     // Request another helper of the same type and close the modal
     if (currentMatch?.matchId) {
-      console.log('✅ Requesting new helper from server');
+      console.log("✅ Requesting new helper from server");
       try {
         requestHelper(type, currentMatch.matchId);
-        console.log('📞 requestHelper called successfully');
+        console.log("📞 requestHelper called successfully");
 
-        console.log('📕 Setting showHelpers to false');
+        console.log("📕 Setting showHelpers to false");
         setShowHelpers(false);
 
-        console.log('👤 Setting showFullProfile to false');
+        console.log("👤 Setting showFullProfile to false");
         setShowFullProfile(false);
 
         // Failsafe: If no helper is received within 5 seconds, assume we're out of content
         setTimeout(() => {
-          console.log('⏰ Failsafe timeout: No helper received in 5 seconds');
-          console.log('🚨 Possibly out of topics - ensuring modal stays closed');
+          console.log("⏰ Failsafe timeout: No helper received in 5 seconds");
+          console.log(
+            "🚨 Possibly out of topics - ensuring modal stays closed"
+          );
           setShowHelpers(false);
           setShowFullProfile(false);
         }, 5000);
 
-        console.log('✅ handleAnotherTopic completed successfully');
+        console.log("✅ handleAnotherTopic completed successfully");
       } catch (error) {
-        console.error('❌ Error in handleAnotherTopic:', error);
+        console.error("❌ Error in handleAnotherTopic:", error);
       }
     } else {
-      console.log('❌ No matchId available, cannot request helper');
+      console.log("❌ No matchId available, cannot request helper");
     }
   };
 
@@ -221,6 +269,19 @@ const VideoMatchScreen = () => {
               </Text>
             </View>
           </BlurView>
+        )}
+
+        {/* End Call Button */}
+        {(matchState === "matched" || matchState === "extended") && (
+          <TouchableOpacity
+            style={styles.endCallButton}
+            onPress={handleEndCall}
+            activeOpacity={0.8}
+          >
+            <BlurView intensity={80} style={styles.endCallButtonBlur}>
+              <Text style={styles.endCallButtonText}>×</Text>
+            </BlurView>
+          </TouchableOpacity>
         )}
 
         {/* Modern Partner Bio Card */}
@@ -257,7 +318,9 @@ const VideoMatchScreen = () => {
                   </Text>
                 )}
                 <View style={styles.tapHint}>
-                  <Text style={styles.tapHintText}>Tap to view full profile</Text>
+                  <Text style={styles.tapHintText}>
+                    Tap to view full profile
+                  </Text>
                 </View>
               </BlurView>
             </TouchableOpacity>
@@ -265,33 +328,32 @@ const VideoMatchScreen = () => {
 
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
-          {/* Modern Helper Button */}
-          {(matchState === "matched" || matchState === "extended") && (
-            <TouchableOpacity
-              style={styles.helperButton}
-              onPress={() => setShowHelpers(true)}
-              activeOpacity={0.8}
-            >
-              <BlurView intensity={80} style={styles.helperButtonContent}>
-                <Text style={styles.helperButtonIcon}>💡</Text>
-                <Text style={styles.helperButtonText}>Ideas</Text>
-              </BlurView>
-            </TouchableOpacity>
-          )}
-
-          {/* Modern Skip Button */}
+          {/* Modern Helper and Skip Buttons in Same Row */}
           {(matchState === "matched" || matchState === "extended") &&
             !showDecisionButtons && (
-              <TouchableOpacity
-                style={styles.skipButton}
-                onPress={handleSkip}
-                activeOpacity={0.8}
-              >
-                <BlurView intensity={60} style={styles.skipButtonContent}>
-                  <Text style={styles.skipButtonIcon}>⏭️</Text>
-                  <Text style={styles.skipButtonText}>Skip</Text>
-                </BlurView>
-              </TouchableOpacity>
+              <View style={styles.topButtonsRow}>
+                <TouchableOpacity
+                  style={styles.helperButton}
+                  onPress={() => setShowHelpers(true)}
+                  activeOpacity={0.8}
+                >
+                  <BlurView intensity={80} style={styles.helperButtonContent}>
+                    <Text style={styles.helperButtonIcon}>💡</Text>
+                    <Text style={styles.helperButtonText}>Ideas</Text>
+                  </BlurView>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.skipButton}
+                  onPress={handleSkip}
+                  activeOpacity={0.8}
+                >
+                  <BlurView intensity={60} style={styles.skipButtonContent}>
+                    <Text style={styles.skipButtonIcon}>⏭️</Text>
+                    <Text style={styles.skipButtonText}>Skip</Text>
+                  </BlurView>
+                </TouchableOpacity>
+              </View>
             )}
 
           {/* Modern Decision Buttons */}
@@ -319,7 +381,14 @@ const VideoMatchScreen = () => {
                   end={{ x: 1, y: 1 }}
                 >
                   <Text style={styles.decisionButtonIcon}>💖</Text>
-                  <Text style={[styles.decisionButtonText, styles.continueButtonText]}>Continue</Text>
+                  <Text
+                    style={[
+                      styles.decisionButtonText,
+                      styles.continueButtonText,
+                    ]}
+                  >
+                    Continue
+                  </Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -333,26 +402,27 @@ const VideoMatchScreen = () => {
             pointerEvents={showHelpers || showFullProfile ? "none" : "auto"}
           >
             <BlurView intensity={95} style={styles.helperCard}>
-              <View style={styles.helperHeader}>
-                <Text style={styles.helperTypeIcon}>
-                  {localCurrentHelper.type === "icebreaker" && "💡"}
-                  {localCurrentHelper.type === "topic" && "🎯"}
-                  {localCurrentHelper.type === "wouldyourather" && "🤔"}
-                </Text>
-                <TouchableOpacity
-                  style={styles.dismissHelperButton}
-                  onPress={() => setLocalCurrentHelper(null)}
-                >
-                  <Text style={styles.dismissHelperButtonText}>×</Text>
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.helperTypeIcon}>
+                {localCurrentHelper.type === "icebreaker" && "💡"}
+                {localCurrentHelper.type === "topic" && "🎯"}
+                {localCurrentHelper.type === "wouldyourather" && "🤔"}
+              </Text>
 
               <Text style={styles.currentHelperText}>
-                {localCurrentHelper.type === "icebreaker" && localCurrentHelper.content}
-                {localCurrentHelper.type === "topic" && `Talk about: ${localCurrentHelper.content}`}
+                {localCurrentHelper.type === "icebreaker" &&
+                  localCurrentHelper.content}
+                {localCurrentHelper.type === "topic" &&
+                  `Talk about: ${localCurrentHelper.content}`}
                 {localCurrentHelper.type === "wouldyourather" &&
                   `${localCurrentHelper.content.option1} OR ${localCurrentHelper.content.option2}`}
               </Text>
+
+              <TouchableOpacity
+                style={styles.dismissHelperButton}
+                onPress={() => setLocalCurrentHelper(null)}
+              >
+                <Text style={styles.dismissHelperButtonText}>×</Text>
+              </TouchableOpacity>
             </BlurView>
           </View>
         )}
@@ -373,7 +443,8 @@ const VideoMatchScreen = () => {
 
               <Text style={styles.idleTitle}>Ready to spark a connection?</Text>
               <Text style={styles.idleSubtitle}>
-                Meet amazing people in your area through live video conversations
+                Meet amazing people in your area through live video
+                conversations
               </Text>
             </View>
 
@@ -502,56 +573,56 @@ const styles = StyleSheet.create({
   // Idle Screen Styles
   idleContainer: {
     flex: 1,
-    paddingHorizontal: Spacing['2xl'],
+    paddingHorizontal: Spacing["2xl"],
   },
   heroSection: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   logoContainer: {
-    alignItems: 'center',
-    marginBottom: Spacing['4xl'],
+    alignItems: "center",
+    marginBottom: Spacing["4xl"],
   },
   logoIcon: {
-    fontSize: Typography.fontSize['6xl'],
+    fontSize: Typography.fontSize["6xl"],
     marginBottom: Spacing.md,
   },
   brandName: {
-    fontSize: Typography.fontSize['3xl'],
+    fontSize: Typography.fontSize["3xl"],
     fontWeight: Typography.fontWeight.bold,
     color: Colors.neutral[50],
     letterSpacing: 1,
   },
   idleTitle: {
-    fontSize: Typography.fontSize['4xl'],
+    fontSize: Typography.fontSize["4xl"],
     fontWeight: Typography.fontWeight.bold,
     color: Colors.neutral[50],
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: Spacing.lg,
-    lineHeight: Typography.fontSize['4xl'] * Typography.lineHeight.tight,
+    lineHeight: Typography.fontSize["4xl"] * Typography.lineHeight.tight,
   },
   idleSubtitle: {
     fontSize: Typography.fontSize.lg,
     color: Colors.neutral[300],
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: Typography.fontSize.lg * Typography.lineHeight.relaxed,
     paddingHorizontal: Spacing.lg,
   },
   ctaSection: {
-    paddingBottom: Spacing['5xl'],
+    paddingBottom: Spacing["5xl"],
   },
   startButton: {
-    marginBottom: Spacing['2xl'],
+    marginBottom: Spacing["2xl"],
     borderRadius: BorderRadius.xl,
     ...Shadows.lg,
   },
   startButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing['3xl'],
+    paddingHorizontal: Spacing["3xl"],
     borderRadius: BorderRadius.xl,
     gap: Spacing.sm,
   },
@@ -567,12 +638,12 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.lg,
   },
   featuresContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     paddingHorizontal: Spacing.lg,
   },
   featureItem: {
-    alignItems: 'center',
+    alignItems: "center",
     flex: 1,
   },
   featureIcon: {
@@ -582,26 +653,26 @@ const styles = StyleSheet.create({
   featureText: {
     fontSize: Typography.fontSize.sm,
     color: Colors.neutral[400],
-    textAlign: 'center',
+    textAlign: "center",
     fontWeight: Typography.fontWeight.medium,
   },
   // Finding Screen Styles
   findingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: Spacing['2xl'],
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: Spacing["2xl"],
   },
   loadingAnimation: {
-    marginBottom: Spacing['4xl'],
+    marginBottom: Spacing["4xl"],
   },
   pulseCircle: {
     width: 120,
     height: 120,
     borderRadius: 60,
     backgroundColor: Colors.primary.main,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     opacity: 0.3,
   },
   innerCircle: {
@@ -609,31 +680,31 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     backgroundColor: Colors.primary.main,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingIcon: {
-    fontSize: Typography.fontSize['2xl'],
+    fontSize: Typography.fontSize["2xl"],
   },
   findingTitle: {
-    fontSize: Typography.fontSize['3xl'],
+    fontSize: Typography.fontSize["3xl"],
     fontWeight: Typography.fontWeight.bold,
     color: Colors.neutral[50],
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: Spacing.lg,
   },
   findingSubtitle: {
     fontSize: Typography.fontSize.lg,
     color: Colors.neutral[300],
-    textAlign: 'center',
-    marginBottom: Spacing['3xl'],
+    textAlign: "center",
+    marginBottom: Spacing["3xl"],
   },
   loadingSteps: {
-    width: '100%',
+    width: "100%",
   },
   step: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: Spacing.lg,
   },
   stepIndicator: {
@@ -653,7 +724,7 @@ const styles = StyleSheet.create({
   },
   // Video Overlay Styles
   overlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
@@ -661,17 +732,17 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   timerContainer: {
-    position: 'absolute',
-    top: Spacing['6xl'], // Increased even more for iPhone notch and safe area
-    right: Spacing.lg,
+    position: "absolute",
+    top: Spacing["6xl"] + Spacing.base, // Extra margin for iPhone safe area
+    left: Spacing.lg,
     borderRadius: BorderRadius.lg,
-    overflow: 'hidden',
+    overflow: "hidden",
     zIndex: 15,
   },
   timerContent: {
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.base,
-    alignItems: 'center',
+    alignItems: "center",
   },
   timerLabel: {
     fontSize: Typography.fontSize.xs,
@@ -684,9 +755,31 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.bold,
     color: Colors.neutral[50],
   },
+  // End Call Button Styles
+  endCallButton: {
+    position: "absolute",
+    top: Spacing["6xl"] + Spacing["xl"], // Lower position
+    right: Spacing.lg,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    overflow: "hidden",
+    zIndex: 20,
+  },
+  endCallButtonBlur: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  endCallButtonText: {
+    fontSize: 28,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.neutral[50],
+    lineHeight: 28,
+  },
   // Partner Bio Card Styles
   bioOverlay: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 100,
     left: Spacing.lg,
     right: Spacing.lg,
@@ -694,12 +787,12 @@ const styles = StyleSheet.create({
   bioCard: {
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   bioHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: Spacing.md,
   },
   partnerName: {
@@ -724,39 +817,44 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: Colors.primary.main,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   profileIndicatorText: {
     fontSize: Typography.fontSize.lg,
   },
   tapHint: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   tapHintText: {
     fontSize: Typography.fontSize.xs,
     color: Colors.neutral[400],
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   // Action Buttons Styles
   actionButtonsContainer: {
-    position: 'absolute',
-    bottom: Spacing['2xl'], // Added bottom margin for iPhone home indicator
+    position: "absolute",
+    bottom: Spacing["2xl"], // Added bottom margin for iPhone home indicator
     left: Spacing.lg,
     right: Spacing.lg,
-    alignItems: 'center',
+    alignItems: "center",
+  },
+  topButtonsRow: {
+    flexDirection: "row",
+    gap: Spacing.lg,
+    marginBottom: Spacing.lg,
+    width: "100%",
   },
   helperButton: {
-    position: 'absolute',
-    top: -100, // Moved up more to accommodate larger safe area
-    right: 0,
     borderRadius: BorderRadius.xl,
-    overflow: 'hidden',
+    overflow: "hidden",
     ...Shadows.md,
+    flex: 1,
   },
   helperButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     gap: Spacing.sm,
@@ -772,12 +870,13 @@ const styles = StyleSheet.create({
   // Skip Button Styles
   skipButton: {
     borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.lg,
-    overflow: 'hidden',
+    overflow: "hidden",
+    flex: 1,
   },
   skipButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.xl,
     gap: Spacing.sm,
@@ -792,25 +891,25 @@ const styles = StyleSheet.create({
   },
   // Decision Buttons Styles
   decisionButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.lg,
     marginBottom: Spacing.lg,
   },
   passButton: {
     borderRadius: BorderRadius.xl,
-    overflow: 'hidden',
+    overflow: "hidden",
     flex: 1,
   },
   continueButton: {
     borderRadius: BorderRadius.xl,
-    overflow: 'hidden',
+    overflow: "hidden",
     flex: 1,
     ...Shadows.md,
   },
   decisionButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.xl,
     gap: Spacing.sm,
@@ -828,7 +927,7 @@ const styles = StyleSheet.create({
   },
   // Helper Overlay Styles
   currentHelperOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 160, // Increased further for iPhone safe area
     left: Spacing.lg,
     right: Spacing.lg,
@@ -836,15 +935,12 @@ const styles = StyleSheet.create({
     elevation: 9999,
   },
   helperCard: {
+    flexDirection: "row",
+    alignItems: "center",
     borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    overflow: 'hidden',
-  },
-  helperHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
+    padding: Spacing.base,
+    overflow: "hidden",
+    gap: Spacing.sm,
   },
   helperTypeIcon: {
     fontSize: Typography.fontSize.xl,
@@ -854,8 +950,8 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     backgroundColor: Colors.overlay.light,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   dismissHelperButtonText: {
     fontSize: Typography.fontSize.lg,
@@ -863,11 +959,11 @@ const styles = StyleSheet.create({
     color: Colors.neutral[50],
   },
   currentHelperText: {
-    fontSize: Typography.fontSize.base,
+    fontSize: Typography.fontSize.sm,
     color: Colors.neutral[50],
-    textAlign: 'center',
-    lineHeight: Typography.fontSize.base * Typography.lineHeight.normal,
+    lineHeight: Typography.fontSize.sm * Typography.lineHeight.normal,
     fontWeight: Typography.fontWeight.medium,
+    flex: 1,
   },
 });
 

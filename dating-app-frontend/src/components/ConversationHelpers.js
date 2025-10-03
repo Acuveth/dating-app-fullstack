@@ -98,53 +98,15 @@ const ConversationHelpers = ({ visible, onClose, onRequestHelper, currentHelper,
 
     return (
       <ScrollView style={styles.helperContentScroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.helperHeader}>
-          <View style={styles.helperIconContainer}>
-            <Text style={styles.helperIcon}>{helperInfo.icon}</Text>
+        <View style={styles.helperHeaderRow}>
+          <View style={styles.helperHeaderLeft}>
+            <View style={styles.helperIconContainer}>
+              <Text style={styles.helperIcon}>{helperInfo.icon}</Text>
+            </View>
+            <Text style={styles.helperTitle}>{helperInfo.title}</Text>
           </View>
-          <Text style={styles.helperTitle}>{helperInfo.title}</Text>
-        </View>
-
-        <View style={styles.helperContentCard}>
-          {currentHelper.type === 'icebreaker' && (
-            <Text style={styles.helperQuestion}>{currentHelper.content}</Text>
-          )}
-
-          {currentHelper.type === 'wouldyourather' && (
-            <View style={styles.wouldYouRatherContainer}>
-              <View style={styles.optionCard}>
-                <View style={styles.optionNumber}>
-                  <Text style={styles.optionNumberText}>A</Text>
-                </View>
-                <Text style={styles.optionText}>{currentHelper.content.option1}</Text>
-              </View>
-
-              <View style={styles.orDivider}>
-                <View style={styles.orLine} />
-                <Text style={styles.orText}>OR</Text>
-                <View style={styles.orLine} />
-              </View>
-
-              <View style={styles.optionCard}>
-                <View style={styles.optionNumber}>
-                  <Text style={styles.optionNumberText}>B</Text>
-                </View>
-                <Text style={styles.optionText}>{currentHelper.content.option2}</Text>
-              </View>
-            </View>
-          )}
-
-          {currentHelper.type === 'topic' && (
-            <View style={styles.topicContainer}>
-              <Text style={styles.topicLabel}>Let's talk about:</Text>
-              <Text style={styles.topicContent}>{currentHelper.content}</Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.actionButtonsContainer}>
           <TouchableOpacity
-            style={styles.secondaryButton}
+            style={styles.closeHelperButton}
             onPress={() => {
               if (onDismissHelper) {
                 onDismissHelper();
@@ -154,8 +116,47 @@ const ConversationHelpers = ({ visible, onClose, onRequestHelper, currentHelper,
             }}
             activeOpacity={0.8}
           >
-            <Text style={styles.secondaryButtonText}>Close</Text>
+            <Text style={styles.closeHelperButtonText}>×</Text>
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.contentAndButtonRow}>
+          <View style={styles.helperContentCard}>
+            {currentHelper.type === 'icebreaker' && (
+              <Text style={styles.helperQuestion}>{currentHelper.content}</Text>
+            )}
+
+            {currentHelper.type === 'wouldyourather' && (
+              <View style={styles.wouldYouRatherContainer}>
+                <View style={styles.optionCard}>
+                  <View style={styles.optionNumber}>
+                    <Text style={styles.optionNumberText}>A</Text>
+                  </View>
+                  <Text style={styles.optionText}>{currentHelper.content.option1}</Text>
+                </View>
+
+                <View style={styles.orDivider}>
+                  <View style={styles.orLine} />
+                  <Text style={styles.orText}>OR</Text>
+                  <View style={styles.orLine} />
+                </View>
+
+                <View style={styles.optionCard}>
+                  <View style={styles.optionNumber}>
+                    <Text style={styles.optionNumberText}>B</Text>
+                  </View>
+                  <Text style={styles.optionText}>{currentHelper.content.option2}</Text>
+                </View>
+              </View>
+            )}
+
+            {currentHelper.type === 'topic' && (
+              <View style={styles.topicContainer}>
+                <Text style={styles.topicLabel}>Let's talk about:</Text>
+                <Text style={styles.topicContent}>{currentHelper.content}</Text>
+              </View>
+            )}
+          </View>
 
           <TouchableOpacity
             style={styles.primaryButton}
@@ -172,7 +173,6 @@ const ConversationHelpers = ({ visible, onClose, onRequestHelper, currentHelper,
             }}
             activeOpacity={0.8}
           >
-            <Text style={styles.primaryButtonText}>Get Another</Text>
             <Text style={styles.primaryButtonIcon}>🔄</Text>
           </TouchableOpacity>
         </View>
@@ -367,37 +367,64 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     maxHeight: height * 0.75,
   },
-  helperHeader: {
+  helperHeaderRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing['2xl'],
-    paddingTop: Spacing.lg,
+    justifyContent: 'space-between',
+    marginBottom: Spacing.xl,
+    paddingTop: Spacing.base,
+  },
+  helperHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   helperIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: Colors.primary.main,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    marginRight: Spacing.base,
     ...Shadows.md,
   },
   helperIcon: {
-    fontSize: Typography.fontSize['2xl'],
+    fontSize: Typography.fontSize.xl,
   },
   helperTitle: {
-    fontSize: Typography.fontSize['2xl'],
+    fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.neutral[50],
-    textAlign: 'center',
+  },
+  closeHelperButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.neutral[600],
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: Spacing.base,
+  },
+  closeHelperButtonText: {
+    fontSize: 28,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.neutral[200],
+    lineHeight: 28,
   },
 
+  // Content and Button Row
+  contentAndButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.base,
+  },
   // Helper Content Card
   helperContentCard: {
     backgroundColor: Colors.neutral[700],
     borderRadius: BorderRadius.lg,
-    padding: Spacing.xl,
-    marginBottom: Spacing['2xl'],
+    padding: Spacing.lg,
+    flex: 1,
     ...Shadows.sm,
   },
   helperQuestion: {
@@ -477,34 +504,16 @@ const styles = StyleSheet.create({
 
   // Action Buttons
   actionButtonsContainer: {
-    flexDirection: 'row',
-    gap: Spacing.base,
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xl,
-  },
-  secondaryButton: {
-    flex: 1,
-    backgroundColor: Colors.neutral[600],
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.neutral[500],
-  },
-  secondaryButtonText: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.neutral[200],
+    marginTop: Spacing.xl,
+    paddingBottom: Spacing.base,
   },
   primaryButton: {
-    flex: 1,
     backgroundColor: Colors.primary.main,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.base,
-    flexDirection: 'row',
+    borderRadius: BorderRadius.full,
+    width: 56,
+    height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: Spacing.sm,
     ...Shadows.md,
   },
   primaryButtonText: {
@@ -513,7 +522,7 @@ const styles = StyleSheet.create({
     color: Colors.neutral[50],
   },
   primaryButtonIcon: {
-    fontSize: Typography.fontSize.base,
+    fontSize: Typography.fontSize.xl,
   },
 });
 

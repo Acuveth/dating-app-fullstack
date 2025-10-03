@@ -153,16 +153,6 @@ const VideoCall = ({
             <Text style={styles.partnerVideoSubtext}>Video feed will appear here</Text>
           </View>
         )}
-
-        {/* Connection status indicator */}
-        {connectionState === "connected" && (
-          <View style={styles.connectionStatus}>
-            <BlurView intensity={80} style={styles.connectionStatusBlur}>
-              <View style={styles.connectionDot} />
-              <Text style={styles.connectionText}>Connected</Text>
-            </BlurView>
-          </View>
-        )}
       </View>
 
       {/* Enhanced local camera preview */}
@@ -373,30 +363,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     color: Colors.neutral[400],
     textAlign: 'center',
-  },
-  connectionStatus: {
-    position: 'absolute',
-    top: Spacing['6xl'] + Spacing.base, // Extra margin for iPhone safe area
-    left: Spacing.lg,
-  },
-  connectionStatusBlur: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.lg,
-    gap: Spacing.sm,
-  },
-  connectionDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.status.success,
-  },
-  connectionText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
-    color: Colors.neutral[50],
   },
   // Local Video Styles
   localVideoContainer: {

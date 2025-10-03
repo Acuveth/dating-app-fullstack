@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,11 +10,18 @@ import {
   Dimensions,
   SafeAreaView,
   StatusBar,
-} from 'react-native';
-import { BlurView } from 'expo-blur';
-import { Colors, Typography, Spacing, BorderRadius, Shadows, Components } from '../theme/designSystem';
+} from "react-native";
+import { BlurView } from "expo-blur";
+import {
+  Colors,
+  Typography,
+  Spacing,
+  BorderRadius,
+  Shadows,
+  Components,
+} from "../theme/designSystem";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 const FullProfileModal = ({ visible, partner, onClose }) => {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
@@ -45,11 +52,7 @@ const FullProfileModal = ({ visible, partner, onClose }) => {
     }
 
     return (
-      <Image
-        source={imageSource}
-        style={styles.photo}
-        resizeMode="cover"
-      />
+      <Image source={imageSource} style={styles.photo} resizeMode="cover" />
     );
   };
 
@@ -58,14 +61,22 @@ const FullProfileModal = ({ visible, partner, onClose }) => {
 
     const getHelperInfo = () => {
       switch (type) {
-        case 'iceBreakerAnswers':
-          return { title: 'Ice Breakers', icon: '✨', color: Colors.primary.main };
-        case 'wouldYouRatherAnswers':
-          return { title: 'Would You Rather', icon: '🤔', color: Colors.secondary.main };
-        case 'twoTruthsOneLie':
-          return { title: 'Two Truths, One Lie', icon: '🎭', color: '#A8E6CF' };
+        case "iceBreakerAnswers":
+          return {
+            title: "Ice Breakers",
+            icon: "✨",
+            color: Colors.primary.main,
+          };
+        case "wouldYouRatherAnswers":
+          return {
+            title: "Would You Rather",
+            icon: "🤔",
+            color: Colors.secondary.main,
+          };
+        case "twoTruthsOneLie":
+          return { title: "Two Truths, One Lie", icon: "🎭", color: "#A8E6CF" };
         default:
-          return { title: '', icon: '', color: Colors.neutral[400] };
+          return { title: "", icon: "", color: Colors.neutral[400] };
       }
     };
 
@@ -76,23 +87,29 @@ const FullProfileModal = ({ visible, partner, onClose }) => {
         <View style={styles.helperCategoryHeader}>
           <Text style={styles.helperCategoryIcon}>{helperInfo.icon}</Text>
           <Text style={styles.helperCategoryTitle}>{helperInfo.title}</Text>
-          <View style={[styles.helperCategoryBadge, { backgroundColor: helperInfo.color }]}>
+          <View
+            style={[
+              styles.helperCategoryBadge,
+              { backgroundColor: helperInfo.color },
+            ]}
+          >
             <Text style={styles.helperCategoryBadgeText}>{items.length}</Text>
           </View>
         </View>
 
         {items.slice(0, 3).map((item, index) => (
           <View key={index} style={styles.helperItemCard}>
-            {type === 'iceBreakerAnswers' && (
+            {type === "iceBreakerAnswers" && (
               <View style={styles.helperContent}>
                 <Text style={styles.helperQuestion}>{item.question}</Text>
                 <Text style={styles.helperAnswer}>{item.answer}</Text>
               </View>
             )}
-            {type === 'wouldYouRatherAnswers' && (
+            {type === "wouldYouRatherAnswers" && (
               <View style={styles.helperContent}>
                 <Text style={styles.helperQuestion}>
-                  {item.question?.option1} <Text style={styles.orText}>or</Text> {item.question?.option2}
+                  {item.question?.option1} <Text style={styles.orText}>or</Text>{" "}
+                  {item.question?.option2}
                 </Text>
                 <View style={styles.choiceContainer}>
                   <Text style={styles.choiceLabel}>Choice:</Text>
@@ -103,7 +120,7 @@ const FullProfileModal = ({ visible, partner, onClose }) => {
                 )}
               </View>
             )}
-            {type === 'twoTruthsOneLie' && (
+            {type === "twoTruthsOneLie" && (
               <View style={styles.helperContent}>
                 <View style={styles.truthLieList}>
                   <Text style={styles.truthLieStatement}>{item.truth1}</Text>
@@ -131,7 +148,10 @@ const FullProfileModal = ({ visible, partner, onClose }) => {
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <StatusBar barStyle="light-content" backgroundColor={Colors.neutral[900]} />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={Colors.neutral[900]}
+      />
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -139,9 +159,9 @@ const FullProfileModal = ({ visible, partner, onClose }) => {
               <Text style={styles.closeButtonText}>←</Text>
             </BlurView>
           </TouchableOpacity>
-          <BlurView intensity={80} style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>Profile</Text>
-          </BlurView>
+
+          <Text style={styles.headerTitle}>Profile</Text>
+
           <View style={styles.placeholder} />
         </View>
 
@@ -154,7 +174,9 @@ const FullProfileModal = ({ visible, partner, onClose }) => {
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
                 onMomentumScrollEnd={(event) => {
-                  const index = Math.round(event.nativeEvent.contentOffset.x / width);
+                  const index = Math.round(
+                    event.nativeEvent.contentOffset.x / width
+                  );
                   setCurrentPhotoIndex(index);
                 }}
                 scrollEventThrottle={16}
@@ -180,7 +202,8 @@ const FullProfileModal = ({ visible, partner, onClose }) => {
                       key={index}
                       style={[
                         styles.photoIndicator,
-                        index === currentPhotoIndex && styles.activePhotoIndicator,
+                        index === currentPhotoIndex &&
+                          styles.activePhotoIndicator,
                       ]}
                     />
                   ))}
@@ -201,7 +224,9 @@ const FullProfileModal = ({ visible, partner, onClose }) => {
                   {partner.location?.city && (
                     <View style={styles.locationContainer}>
                       <Text style={styles.locationIcon}>📍</Text>
-                      <Text style={styles.locationText}>{partner.location.city}</Text>
+                      <Text style={styles.locationText}>
+                        {partner.location.city}
+                      </Text>
                     </View>
                   )}
                 </View>
@@ -228,19 +253,32 @@ const FullProfileModal = ({ visible, partner, onClose }) => {
               </View>
 
               <View style={styles.helpersGrid}>
-                {renderConversationHelper('iceBreakerAnswers', partner.conversationHelpers.iceBreakerAnswers)}
-                {renderConversationHelper('wouldYouRatherAnswers', partner.conversationHelpers.wouldYouRatherAnswers)}
-                {renderConversationHelper('twoTruthsOneLie', partner.conversationHelpers.twoTruthsOneLie)}
-
-                {(!partner.conversationHelpers.iceBreakerAnswers?.length &&
-                  !partner.conversationHelpers.wouldYouRatherAnswers?.length &&
-                  !partner.conversationHelpers.twoTruthsOneLie?.length) && (
-                  <View style={styles.emptyHelpersContainer}>
-                    <Text style={styles.emptyHelpersIcon}>🤷‍♀️</Text>
-                    <Text style={styles.emptyHelpersText}>No conversation starters yet</Text>
-                    <Text style={styles.emptyHelpersSubtext}>They haven't added any ice breakers</Text>
-                  </View>
+                {renderConversationHelper(
+                  "iceBreakerAnswers",
+                  partner.conversationHelpers.iceBreakerAnswers
                 )}
+                {renderConversationHelper(
+                  "wouldYouRatherAnswers",
+                  partner.conversationHelpers.wouldYouRatherAnswers
+                )}
+                {renderConversationHelper(
+                  "twoTruthsOneLie",
+                  partner.conversationHelpers.twoTruthsOneLie
+                )}
+
+                {!partner.conversationHelpers.iceBreakerAnswers?.length &&
+                  !partner.conversationHelpers.wouldYouRatherAnswers?.length &&
+                  !partner.conversationHelpers.twoTruthsOneLie?.length && (
+                    <View style={styles.emptyHelpersContainer}>
+                      <Text style={styles.emptyHelpersIcon}>🤷‍♀️</Text>
+                      <Text style={styles.emptyHelpersText}>
+                        No conversation starters yet
+                      </Text>
+                      <Text style={styles.emptyHelpersSubtext}>
+                        They haven't added any ice breakers
+                      </Text>
+                    </View>
+                  )}
               </View>
             </View>
           )}
@@ -258,15 +296,15 @@ const styles = StyleSheet.create({
 
   // Header Styles
   header: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing['4xl'], // Increased for iPhone safe area
+    paddingTop: Spacing["6xl"], // Increased top margin for better spacing
     paddingBottom: Spacing.base,
     zIndex: 100,
   },
@@ -274,12 +312,12 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   closeButtonBlur: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   closeButtonText: {
     fontSize: Typography.fontSize.xl,
@@ -301,33 +339,34 @@ const styles = StyleSheet.create({
   },
   // Content Styles
   content: {
+    marginTop: height * 0.1, // Adjusted to match photo section height
     flex: 1,
   },
   photosSection: {
     height: height * 0.6,
-    position: 'relative',
+    position: "relative",
   },
   photoContainer: {
     width: width,
     height: height * 0.6,
-    position: 'relative',
+    position: "relative",
   },
   photo: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   photoPlaceholder: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     backgroundColor: Colors.neutral[800],
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   photoPlaceholderContent: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   photoPlaceholderIcon: {
-    fontSize: Typography.fontSize['4xl'],
+    fontSize: Typography.fontSize["4xl"],
     color: Colors.neutral[500],
     marginBottom: Spacing.sm,
   },
@@ -337,8 +376,8 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.medium,
   },
   photoOverlay: {
-    position: 'absolute',
-    top: Spacing['4xl'],
+    position: "absolute",
+    top: Spacing["6xl"], // Moved lower to avoid overlap with header
     right: Spacing.lg,
   },
   photoCounter: {
@@ -352,12 +391,12 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.semibold,
   },
   photoIndicators: {
-    position: 'absolute',
+    position: "absolute",
     bottom: Spacing.xl,
     left: 0,
     right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     gap: Spacing.sm,
   },
   photoIndicator: {
@@ -379,23 +418,23 @@ const styles = StyleSheet.create({
     ...Shadows.lg,
   },
   profileHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: Spacing.lg,
   },
   nameSection: {
     flex: 1,
   },
   name: {
-    fontSize: Typography.fontSize['3xl'],
+    fontSize: Typography.fontSize["3xl"],
     fontWeight: Typography.fontWeight.bold,
     color: Colors.neutral[50],
     marginBottom: Spacing.sm,
   },
   ageLocationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.base,
   },
   ageBadge: {
@@ -410,8 +449,8 @@ const styles = StyleSheet.create({
     color: Colors.neutral[50],
   },
   locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.xs,
   },
   locationIcon: {
@@ -423,7 +462,7 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.medium,
   },
   statusIndicator: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: Spacing.xs,
   },
   onlineStatus: {
@@ -459,8 +498,8 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: Spacing.lg,
     gap: Spacing.sm,
   },
@@ -483,8 +522,8 @@ const styles = StyleSheet.create({
     ...Shadows.sm,
   },
   helperCategoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: Spacing.base,
     gap: Spacing.sm,
   },
@@ -532,8 +571,8 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.normal,
   },
   choiceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.sm,
   },
   choiceLabel: {
@@ -544,7 +583,7 @@ const styles = StyleSheet.create({
   helperReason: {
     fontSize: Typography.fontSize.xs,
     color: Colors.neutral[300],
-    fontStyle: 'italic',
+    fontStyle: "italic",
     lineHeight: Typography.fontSize.xs * Typography.lineHeight.normal,
   },
   truthLieList: {
@@ -556,7 +595,7 @@ const styles = StyleSheet.create({
     lineHeight: Typography.fontSize.sm * Typography.lineHeight.normal,
   },
   moreItemsIndicator: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingTop: Spacing.sm,
     borderTopWidth: 1,
     borderTopColor: Colors.neutral[600],
@@ -567,11 +606,11 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.medium,
   },
   emptyHelpersContainer: {
-    alignItems: 'center',
-    paddingVertical: Spacing['2xl'],
+    alignItems: "center",
+    paddingVertical: Spacing["2xl"],
   },
   emptyHelpersIcon: {
-    fontSize: Typography.fontSize['2xl'],
+    fontSize: Typography.fontSize["2xl"],
     marginBottom: Spacing.sm,
   },
   emptyHelpersText: {
@@ -583,7 +622,7 @@ const styles = StyleSheet.create({
   emptyHelpersSubtext: {
     fontSize: Typography.fontSize.sm,
     color: Colors.neutral[400],
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 
